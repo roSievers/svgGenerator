@@ -77,9 +77,46 @@ function generateMatrix (rows, flatData) {
 }
 
 function generateZeroRow (length) {
+    return generateConstantRow(length, 0);
+}
+
+function generateConstantRow (length, value) {
     var result = [];
     for (i = 0; i < length; i++) {
-        result.push(0);
+        result.push(value);
+    }
+    return result;
+}
+
+/* parseMatrix pulls information from the result, after the rref algorithm has run.
+ * It may return:
+ * 1. undefined, if the input implies 1 == 0.
+ * 2. A flat list of numbers (or undefined), which represent the known values.
+ */
+function parseMatrix (matrix) {
+    // Check if the last row contains only zeroes but the last one is nonzero. (0 == 1)
+    if (matrix[matrix.length - 1].slice(0, -1).every(function (x) {return (x == 0);})
+       && (matrix[matrix.length - 1].slice(-1)[0] != 0) ) {
+        return undefined;
+    }
+
+    var datasize = matrix[0].length;
+    var result = generateConstantRow(datasize - 1, undefined);
+    for (var equation = 0; equation < matrix.length; equation++) {
+        var nonzeroEntries = matrix[equation].map(
+                function (x, index) {return {value : x, index: index};}
+            ).filter( function (x) {return x.value != 0} );
+
+        if (nonzeroEntries.length != 2) {
+            continue; // This equation isn't simple.
+        }
+
+        if (nonzeroEntries[1].index != datasize - 1) {
+            continue; // Neither is this equation.
+        }
+
+        // Now it is certain, that matrix[equation] indeed contains an equation.
+        result[nonzeroEntries[0].index] = nonzeroEntries[1].value;
     }
     return result;
 }
