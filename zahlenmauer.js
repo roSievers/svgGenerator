@@ -18,16 +18,52 @@ function init () {
 }
 
 function refreshOutput () {
-    // paper = Raphael("output-problem", 640, 480);
-    var paper = outputSolution;
+    var rows = 3;
+    var originalInformation = [14, undefined, undefined, 5, undefined, 3];
 
-    paper.clear();
-    paper.rect(10, 10, 30, 30);
-    paper.text(12, 12, "12").attr({font : "15px Arial"});
-    renderWall(outputProblem,
-               [[{value:10, color:"black"}],
-                [{value:4, color:"black"}, {value:6, color:"gray"}],
-                [{value:1, color:"gray"}, {value:3, color:"black"}, {value:3, color:"gray"}]]);
+    var matrix = generateMatrix(rows, originalInformation);
+    rrefIp(matrix);
+    var newInformation = parseMatrix(matrix);
+
+    renderWall(outputProblem, generateColorPyramid(rows, [{info:originalInformation, color:"black"}]));
+
+    renderWall(outputSolution, generateColorPyramid(rows, [{info:originalInformation, color:"black"}, {info:newInformation, color:"gray"}]));
+}
+
+/* generateColorPyramid turns flat information about the values into an expanded
+ * form with color information for the renderer.
+ */
+function generateColorPyramid (rows, infos) {
+    var flatStructure = generateConstantRow(infos[0].info.length, undefined);
+
+    for (var i = 0; i < infos.length; i++) {
+        for (j = 0; j < infos[i].info.length; j++) {
+            if ((flatStructure[j] == undefined) && (infos[i].info[j] != undefined)) {
+                // Cell is still empty but there is new information.
+                flatStructure[j] = {value: infos[i].info[j], color: infos[i].color};
+            }
+        }
+    }
+
+    // Catch any remaining undefined fields and replace them by empty placeholders.
+    for (j = 0; j < flatStructure.length; j++) {
+        if (flatStructure[j] == undefined) {
+            flatStructure[j] = {value:"", color:"black"};
+        }
+    }
+
+    // Now expand the flat form into pyramid shape.
+    var i = 0;
+    var result = [];
+    for (var row = 0; row < rows; row++) {
+        var cellRow = [];
+        for (var col = 0; col <= row; col++) {
+            cellRow.push(flatStructure[i]);
+            i++;
+        }
+        result.push(cellRow);
+    }
+    return result;
 }
 
 /* The datasize(rows) function calculates the amount of entries for a
