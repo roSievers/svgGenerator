@@ -18,8 +18,8 @@ function init () {
 }
 
 function refreshOutput () {
-    var rows = 3;
-    var originalInformation = [14, undefined, undefined, 5, undefined, 3];
+    var rows = 4;
+    var originalInformation = [14, undefined, undefined, 5, undefined, 3, undefined, 1, undefined, undefined];
 
     var matrix = generateMatrix(rows, originalInformation);
     rrefIp(matrix);
@@ -27,7 +27,15 @@ function refreshOutput () {
 
     renderWall(outputProblem, generateColorPyramid(rows, [{info:originalInformation, color:"black"}]));
 
-    renderWall(outputSolution, generateColorPyramid(rows, [{info:originalInformation, color:"black"}, {info:newInformation, color:"gray"}]));
+    if (newInformation != undefined) {
+        renderWall(outputSolution, generateColorPyramid(rows, [{info:originalInformation, color:"black"}, {info:newInformation, color:"gray"}]));
+    } else {
+        renderError(outputSolution);
+    }
+}
+
+function startDownload (image) {
+    open("data:image/svg+xml," + encodeURIComponent(document.getElementById(image).innerHTML));
 }
 
 /* generateColorPyramid turns flat information about the values into an expanded
@@ -174,12 +182,23 @@ function renderWall (paper, data) {
             var rect = paper.rect(middle + (col - (row + 1) / 2) * boxwidth,
                        margin + row * boxheight, boxwidth, boxheight);
             var label = paper.text(0, 0, data[row][col].value);
-            label.attr({font : "15px Arial", fill : data[row][col].color});
-            var bbox = label.getBBox();
             label.attr({
+                font : "15px Arial",
+                fill : data[row][col].color,
                 x : rect.attr("x") + boxwidth / 2,
                 y : rect.attr("y") + boxheight / 2
             });
         }
     }
+}
+
+function renderError (paper) {
+    paper.clear();
+    var label = paper.text(0, 0, "0 = 1");
+    label.attr({font:"15px Arial", fill: "red"});
+    bbox = label.getBBox();
+    label.attr({
+        x : bbox.width / 2 + 20,
+        y : bbox.height / 2 + 20
+    })
 }
