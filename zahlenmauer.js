@@ -8,6 +8,8 @@ var sourcecode;
 var outputProblem;
 var outputSolution;
 
+var cache = "";
+
 function init () {
     sourcecode = document.getElementById("sourcecode");
 
@@ -18,11 +20,29 @@ function init () {
 }
 
 function refreshOutput () {
-    var rows = 4;
-    var originalInformation = [14, undefined, undefined, 5, undefined, 3, undefined, 1, undefined, undefined];
+    if (cache == sourcecode.value) {
+        return;
+    }
+    var input = parseInput(sourcecode.value);
+
+    if (input == undefined) {
+        return;
+    }
+
+    cache = sourcecode.value;
+
+    var rows = input.rows;
+    var originalInformation = input.data;
+
+    // var rows = 4;
+    // var originalInformation = [14, undefined, undefined, 5, undefined, 3, undefined, 1, undefined, undefined];
 
     var matrix = generateMatrix(rows, originalInformation);
     rrefIp(matrix);
+    // round all values.
+    for (var row = 0; row < matrix.length; row++) {
+        matrix[row] = matrix[row].map(rounding(-4));
+    }
     var newInformation = parseMatrix(matrix);
 
     renderWall(outputProblem, generateColorPyramid(rows, [{info:originalInformation, color:"black"}]));
@@ -32,6 +52,48 @@ function refreshOutput () {
     } else {
         renderError(outputSolution);
     }
+}
+
+function rounding (exponent) {
+    return function (rnum) {
+        return Math.round(rnum / Math.pow(2, exponent)) * Math.pow(2, exponent);
+    }
+}
+
+/* Converts input of the type
+ * 14
+ * ?, ?
+ * 5, ?, 3
+ * ?, 1, ?, ?
+ * into the more useful form
+ * {lines:4, data:[14, undefined, undefined, 5, undefined, 3, undefined, 1, undefined, undefined]}.
+ * Returns undefined on error.
+ */
+function parseInput (input) {
+    var result = [];
+    var lines = input.split("\n");
+    for (var l = 0; l < lines.length; l++) {
+        if (lines[l].trim() == "") { continue; }
+        var entries = lines[l].split(",").map(
+            function (x) {
+                if (x.trim() == "?") { return undefined }
+                return +x
+            });
+        result.push(entries);
+    }
+
+    // Now check, if the recived data is sane.
+    for (var row = 0; row < result.length; row++) {
+        if (result[row].length != row + 1) { return undefined; }
+        for (var col = 0; col <= row; col++) {
+            if (result[row][col] == NaN) { return undefined; }
+        }
+    }
+
+    return {
+        rows: result.length,
+        data: result.reduce(function (prev, x) {return prev.concat(x);}, [])
+    };
 }
 
 function startDownload (image) {
@@ -147,20 +209,16 @@ function parseMatrix (matrix) {
     var datasize = matrix[0].length;
     var result = generateConstantRow(datasize - 1, undefined);
     for (var equation = 0; equation < matrix.length; equation++) {
-        var nonzeroEntries = matrix[equation].map(
+        var nonzeroEntries = matrix[equation].slice(0, -1).map(
                 function (x, index) {return {value : x, index: index};}
             ).filter( function (x) {return x.value != 0} );
 
-        if (nonzeroEntries.length != 2) {
+        if (nonzeroEntries.length != 1) {
             continue; // This equation isn't simple.
         }
 
-        if (nonzeroEntries[1].index != datasize - 1) {
-            continue; // Neither is this equation.
-        }
-
         // Now it is certain, that matrix[equation] indeed contains an equation.
-        result[nonzeroEntries[0].index] = nonzeroEntries[1].value;
+        result[nonzeroEntries[0].index] = matrix[equation][datasize - 1];
     }
     return result;
 }
