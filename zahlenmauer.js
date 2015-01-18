@@ -1,3 +1,8 @@
+/* The interactive part of the “Zahlenmauer” module.
+ * requires Raphael for vector graphics and
+ * rref to do linear algebra.
+ */
+
 var sourcecode;
 
 var outputProblem;
@@ -29,15 +34,54 @@ function refreshOutput () {
  * given amount of rows.
  */
 function datasize (rows) {
-    return rows * (rows + 1) / 2
+    return rows * (rows + 1) / 2;
 }
+
+/* Turns (row, col) coordinates into flat coordinates. */
+function flattenCoord (row, col) {
+    return row * (row + 1) / 2 + col;
+}
+
+/* Turns flat coordinates into (row, col) coordinates. */
+// TODO: implementation;
 
 /* The function generateMatrix creates the matrix necessary to calculate
  * missing values in the wall. As parameters it takes the amount of rows
  * and a flat list of values. Use “undefined” for undefined values.
  */
 function generateMatrix (rows, flatData) {
-    // TODO.
+    var matrix = [];
+    var systemSize = datasize(rows) + 1;
+
+    // First generate the linear equations inherent to the “Zahlenmauer” promlem.
+    for (var row = 0; row < rows - 1; row++) {
+        for (var col = 0; col <= row; col++) {
+            var newRow = generateZeroRow(systemSize);
+            newRow[flattenCoord(row,   col)] =  1;
+            newRow[flattenCoord(row+1, col)] = -1;
+            newRow[flattenCoord(row+1, col+1)] = -1;
+            matrix.push(newRow);
+        }
+    }
+
+    // Insert the known fields.
+    for (var i = 0; i < systemSize - 1; i ++) {
+        if (flatData[i] != undefined) {
+            var newRow = generateZeroRow(systemSize);
+            newRow[i] = 1;
+            newRow[systemSize - 1] = flatData[i];
+            matrix.push(newRow);
+        }
+    }
+    return matrix;
+}
+
+function generateZeroRow (length) {
+    var result = [];
+    for (i = 0; i < length; i++) {
+        result.push(0);
+    }
+    return result;
 }
 
 /* renderWall (paper, data) takes data in the form:
