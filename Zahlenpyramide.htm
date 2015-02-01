@@ -68,12 +68,15 @@
 5, 3, ?
 ?, ?, ?, 1</textarea>
     </div>
+
+    <div style="display:none">
     <div class="alert alert-warning" role="alert">
         <strong>Warning!</strong> Best check yo self, you're not looking too good.
       </div>
       <div class="alert alert-danger" role="alert">
         <strong>Oh snap!</strong> Change a few things up and try submitting again.
       </div>
+    </div>
 
     <div class="row">
         <div class="col-sm-6">
@@ -112,7 +115,7 @@
       <span class="input-group-addon" id="basic-addon1">
         <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
       </span>
-      <input type="text" class="form-control" placeholder="Statischer Link" aria-describedby="basic-addon1" readonly="readonly" />
+      <input type="text" class="form-control" id="application-static-link" placeholder="Statischer Link" aria-describedby="basic-addon1" readonly="readonly" />
     </div>
 
     </div> <!-- /container -->
@@ -129,6 +132,7 @@
 
     <!-- The SVG Generator application -->
     <script src="application.js"></script>
+    <script src="raphael-min.js"></script>
     <!-- The specific code for this particular generator -->
     <script src="rref.js"></script>
     <script src="zahlenpyramide.js"></script>
