@@ -36,13 +36,18 @@ var application = {
 /* Download links */
 
 application.startDownload = function (container) {
-    open("data:image/svg+xml," + encodeURIComponent(application.outputs[container].innerHtml));
+    var payload = application.outputs[container].innerHTML
+    var blob = new Blob([payload], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "image.svg");
 };
 
 /* Transform all the download links */
 var downloads = document.getElementsByClassName("application-download");
 for (var i = 0; i < downloads.length; i++) {
-    downloads[i].href = "javascript:application.startDownload('%1');".replace("%1", downloads[i].href);
+    var urlStructure = downloads[i].href.split("/");
+    var oldlink = urlStructure[urlStructure.length -1];
+    downloads[i].href = "#";
+    downloads[i].onclick = function () {return application.startDownload(oldlink)};
 }
 
 application.inputRefresh = function () {
