@@ -93,16 +93,29 @@ application.inputRefresh = function () {
     application.messages.setContext("serialization");
     application.messages.clear();
 
-    var serializedInputLink = application.serialize();
+    var serializedData = application.serialize(inputData);
+    var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
 
     if (typeof(serializedInputLink) == "undefined") {
         application.messages.error("The static link can't be created.");
     }
 
     application.staticLink.value = serializedInputLink;
+    document.location.hash = "#"+serializedData;
 
     // Done.
     application.messages.setContext("unspecified");
+}
+
+application.init = function () {
+    serializedData = document.location.hash;
+    recreatedInput = application.deserialize(serializedData);
+    if (typeof(recreatedInput) != undefined) {
+        for (i in recreatedInput) {
+            application.inputs[i].value = recreatedInput[i];
+        }
+    }
+    application.inputRefresh();
 }
 
 /* Hook up all input elements */
@@ -123,6 +136,7 @@ application.messages = {
         parsing : {error: "Parsing error: %1", warning: "Warning (Parsing): %1"},
         processing : {error: "Processing error: %1", warning: "Warning (Processing): %1"},
         rendering : {error: "Rendering error: %1", warning: "Warning (Rendering): %1"},
+        serialization : {error: "Serialization error: %1", warning: "Warning (Serialization): %1"},
         unspecified: {error: "Error: %1", warning: "Warning: %1"}
     },
     context : undefined

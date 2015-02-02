@@ -66,6 +66,42 @@ application.renderOutput["output-solution"] = function (data) {
     renderWall(outputSolution, data.solution);
 }
 
+application.serialize = function (inputData) {
+    return inputData.data.map(function (x) {
+        if (typeof(x) == undefined) {
+            return "";
+        }
+        return x
+    }).join();
+}
+
+application.deserialize = function (serialized) {
+    var numbers = serialized.slice(1).split(",").map(function (x) {
+        if (x == "") {return "?"};
+        return x;
+    });
+
+    // is there anything to do?
+    if (numbers.length < 2) {
+        return undefined;
+    }
+
+    // Determine the amount of rows which are represented by the data.
+    var rows = Math.floor(Math.sqrt(numbers.length * 2));
+    // Double check this is correct
+    if (rows * (rows+1) /2 != numbers.length) {
+        console.log("The data passed to deserialization had a broken length.");
+        return undefined;
+    }
+
+    var lines = [];
+    for (var row = 0; row < rows; row++) {
+        lines.push(numbers.slice(row * (row+1) /2, row * (row+3) / 2+1).join(","));
+    }
+
+    return {sourcecode : lines.join("\n")};
+}
+
 // Helper functions
 
 function rounding (exponent) {
@@ -249,4 +285,4 @@ function renderWall (paper, data) {
     }
 }
 
-application.inputRefresh();
+application.init();
