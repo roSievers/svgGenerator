@@ -49,7 +49,7 @@ application.processData = function (input) {
     var result = {
         problem : generateColorPyramid(rows, [{info:originalInformation, color:"black"}])};
 
-    if (typeof(newInformation) != undefined ) {
+    if (typeof(newInformation) != "undefined" ) {
         result.solution = generateColorPyramid(rows, [
             {info:originalInformation, color:"black"},
             {info:newInformation, color:"gray"} ]);
@@ -63,7 +63,9 @@ application.renderOutput["output-problem"] = function (data) {
 }
 
 application.renderOutput["output-solution"] = function (data) {
-    renderWall(outputSolution, data.solution);
+    if (typeof(data.solution) != "undefined") {
+        renderWall(outputSolution, data.solution);
+    }
 }
 
 application.serialize = function (inputData) {
@@ -118,7 +120,7 @@ function generateColorPyramid (rows, infos) {
     var flatStructure = generateConstantRow(infos[0].info.length, undefined);
 
     for (var i = 0; i < infos.length; i++) {
-        for (j = 0; j < infos[i].info.length; j++) {
+        for (var j = 0; j < infos[i].info.length; j++) {
             if ((flatStructure[j] == undefined) && (infos[i].info[j] != undefined)) {
                 // Cell is still empty but there is new information.
                 flatStructure[j] = {value: infos[i].info[j], color: infos[i].color};
@@ -127,7 +129,7 @@ function generateColorPyramid (rows, infos) {
     }
 
     // Catch any remaining undefined fields and replace them by empty placeholders.
-    for (j = 0; j < flatStructure.length; j++) {
+    for (var j = 0; j < flatStructure.length; j++) {
         if (flatStructure[j] == undefined) {
             flatStructure[j] = {value:"", color:"black"};
         }
@@ -212,6 +214,7 @@ function parseMatrix (matrix) {
     // Check if the last row contains only zeroes but the last one is nonzero. (0 == 1)
     if (matrix[matrix.length - 1].slice(0, -1).every(function (x) {return (x == 0);})
        && (matrix[matrix.length - 1].slice(-1)[0] != 0) ) {
+        application.msg.error("Fehler!", "Aus den eingegebenen Zahlen ergibt sich ein Wiederspruch.");
         return undefined;
     }
 
