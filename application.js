@@ -58,9 +58,6 @@ application.inputRefresh = function () {
 }
 
 application.inputRefresh2 = function () {
-//    application.messages.setContext("parsing");
-//    application.messages.clear();
-
     var rawInputData = {};
     for (i in application.inputs) {
         rawInputData[i] = application.inputs[i].value;
@@ -79,8 +76,6 @@ application.inputRefresh2 = function () {
     }
 
     // Input data has changed and we need to update the resulting data accordingly.
-//    application.messages.setContext("processing");
-//    application.messages.clear();
 
     var processedData = application.processData(inputData);
 
@@ -96,16 +91,12 @@ application.inputRefresh2 = function () {
     }
 
     // The processed data has changed and we need to update the outputs.
-//    application.messages.setContext("rendering");
-//    application.messages.clear();
 
     for (o in application.outputs) {
         application.renderOutput[o](processedData);
     }
 
     // If no errors occurred, serialize the input data into a link.
-//    application.messages.setContext("serialization");
-//    application.messages.clear();
 
     var serializedData = application.serialize(inputData);
     var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
@@ -119,7 +110,6 @@ application.inputRefresh2 = function () {
     document.location.hash = "#"+serializedData;
 
     // Done.
-//    application.messages.setContext("unspecified");
 }
 
 application.init = function () {
@@ -145,71 +135,51 @@ application.cache = {
     setProcessed : function (x) {return false;}
 }
 
+
 // The new warning and error module
 
-function generateErrorContainer (name) {
-    var obj = {
-        errors : [],
-        warnings : []
-    };
-    obj.error = function (caption, text) {
-        obj.errors.push({
-            caption : caption,
-            text : text,
-            cssClass : "alert alert-danger"
-        })
-    };
-    obj.warn = function (caption, text) {
-        obj.warnings.push({
-            caption : caption,
-            text : text,
-            cssClass : "alert alert-warning"
-        })
-    };
+application.msg = {
+    errors : [],
+    warnings : []
+};
 
-    obj.genOneDOM = function (message) {
-        var node = document.createElement("div");
-        node.setAttribute("class", message.cssClass);
-        node.setAttribute("role", "alert");
-        node.innerHTML = "<strong>%1</strong> %2"
-            .replace("%1", message.caption)
-            .replace("%2", message.text);
-        return node;
-    };
+application.msg.error = function (caption, text) {
+    application.msg.errors.push({
+        caption : caption,
+        text : text,
+        cssClass : "alert alert-danger"
+    })
+};
 
-    obj.genAllDOM = function () {
-        return {
-            errors : obj.errors.map(obj.genOneDOM),
-            warnings : obj.warnings.map(obj.genOneDOM)
-        }
-    };
+application.msg.warn = function (caption, text) {
+    application.msg.warnings.push({
+        caption : caption,
+        text : text,
+        cssClass : "alert alert-warning"
+    })
+};
 
-    obj.wipe = function () {
-        obj.errors = [];
-        obj.warnings = [];
+application.msg.genOneDOM = function (message) {
+    var node = document.createElement("div");
+    node.setAttribute("class", message.cssClass);
+    node.setAttribute("role", "alert");
+    node.innerHTML = "<strong>%1</strong> %2"
+        .replace("%1", message.caption)
+        .replace("%2", message.text);
+    return node;
+};
+
+application.msg.genAllDOM = function () {
+    return {
+        errors : application.msg.errors.map(application.msg.genOneDOM),
+        warnings : application.msg.warnings.map(application.msg.genOneDOM)
     }
+};
 
-    return obj;
+application.msg.wipe = function () {
+    application.msg.errors = [];
+    application.msg.warnings = [];
 }
-
-application.getAllMessages = function () {
-    var result = {errors:[],warnings:[]};
-    for (key in application.errorContainers) {
-        var newEntries = application.errorContainers[key].genAllDOM();
-        result.errors = result.errors.concat(newEntries.errors);
-        result.warnings = result.warnings.concat(newEntries.warnings);
-    }
-    return result;
-}
-
-application.errorContainers = {
-    application : generateErrorContainer(),
-    parsing : generateErrorContainer(),
-    computation : generateErrorContainer(),
-    output : generateErrorContainer()
-}
-
-application.msg = application.errorContainers.application;
 
 application.stderr = document.getElementById("stderr");
 
@@ -217,7 +187,7 @@ application.displayErrors = function () {
 //    application.msg.warn("Achtung!", "Diese Anwendung wird gerade getestet.");
 
     removeAllChildren(application.stderr);
-    var messages = application.getAllMessages();
+    var messages = application.msg.genAllDOM();
     for (var i = 0; i < messages.errors.length; i++) {
         application.stderr.appendChild(messages.errors[i]);
     }
@@ -228,7 +198,7 @@ application.displayErrors = function () {
 
 function removeAllChildren (node) {
     while (node.hasChildNodes()) {
-            node.removeChild(node.lastChild);
+        node.removeChild(node.lastChild);
     }
 }
 
