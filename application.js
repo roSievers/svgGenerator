@@ -1,20 +1,23 @@
 /* The application javascript performs some basic transformations on the
  * supplied html. Hooks are placed in several places. This is determined
- * by CSS classes. In particular:
+ * by CSS classes or an id. In particular:
  *
- * application-input
+ * CSS class "application-input"
  *   -> whenever the content is modified, the parser is rerun.
  *
- * application-output
+ * <div class="application-output">
  *   -> whenever the solution changes, the output functions are run.
  *
- * application-static-link
+ * <input type="text" id="application-static-link">
  *   -> When the (parsed) input is modified it will be serialized and placed here
  *   implement application.serialize and application.deserialize to use this feature.
  *
- * application-download
+ * <a class="application-download" href="someTargetContainer">
  *   ! only allowed on elements of type "a"
  *   ! the href points to the id of the target container.
+ *
+ * <div id="stderr">
+ *   -> all errors and warnings will output in this div
  */
 
 function indexById (array) {
@@ -29,6 +32,7 @@ var application = {
     inputs : indexById(document.getElementsByClassName("application-input")),
     outputs : indexById(document.getElementsByClassName("application-output")),
     staticLink : document.getElementById("application-static-link"),
+    stderr : document.getElementById("stderr"),
     renderOutput : {}
 };
 
@@ -46,13 +50,16 @@ var downloads = document.getElementsByClassName("application-download");
 for (var i = 0; i < downloads.length; i++) {
     var urlStructure = downloads[i].href.split("/");
     var oldlink = urlStructure[urlStructure.length -1];
-    downloads[i].href = "#";
+    downloads[i].href = "#"; // TODO: This behavior is not expected. Only the download should start.
     downloads[i].onclick = function () {return application.startDownload(oldlink)};
 }
 
 application.inputRefresh = function () {
     application.msg.wipe();
-    application.inputRefresh2();
+    var success = application.inputRefresh2();
+    if (!success) {
+        application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
+    }
 
     application.displayErrors();
 }
@@ -102,7 +109,7 @@ application.inputRefresh2 = function () {
     var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
 
     if (typeof(serializedInputLink) == "undefined") {
-        application.msg.error("Fehler!", "Der Link kann nicht aktualliert werden");
+        application.msg.error("Fehler!", "Der Link kann nicht aktuallisert werden");
         return true;
     }
 
@@ -110,6 +117,7 @@ application.inputRefresh2 = function () {
     document.location.hash = "#"+serializedData;
 
     // Done.
+    return true;
 }
 
 application.init = function () {
@@ -181,11 +189,8 @@ application.msg.wipe = function () {
     application.msg.warnings = [];
 }
 
-application.stderr = document.getElementById("stderr");
 
 application.displayErrors = function () {
-//    application.msg.warn("Achtung!", "Diese Anwendung wird gerade getestet.");
-
     removeAllChildren(application.stderr);
     var messages = application.msg.genAllDOM();
     for (var i = 0; i < messages.errors.length; i++) {
