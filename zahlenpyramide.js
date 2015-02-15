@@ -1,7 +1,7 @@
 // Monkey patch the SVG Generator application.
 
-outputProblem = Raphael("output-problem", 300, 300);
-outputSolution = Raphael("output-solution", 300, 300);
+outputProblem = Raphael("zahlenmauer", 300, 300);
+outputSolution = Raphael("zahlenmauer-lsg", 300, 300);
 
 application.parseInput = function (inputs) {
     var input = inputs.sourcecode;
@@ -58,11 +58,11 @@ application.processData = function (input) {
     return result;
 }
 
-application.renderOutput["output-problem"] = function (data) {
+application.renderOutput["zahlenmauer"] = function (data) {
     renderWall(outputProblem, data.problem);
 }
 
-application.renderOutput["output-solution"] = function (data) {
+application.renderOutput["zahlenmauer-lsg"] = function (data) {
     if (typeof(data.solution) != "undefined") {
         renderWall(outputSolution, data.solution);
     }

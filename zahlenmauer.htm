@@ -8,7 +8,7 @@
     <meta name="author" content="">
     <!--    <link rel="icon" href="http://getbootstrap.com/favicon.ico"> -->
 
-    <title>Zahlenpyramiden – SVG Generator</title>
+    <title>Zahlenmauern – SVG Generator</title>
 
     <!-- Bootstrap core CSS -->
     <link href="bootstrap/bootstrap.css" rel="stylesheet">
@@ -76,14 +76,14 @@
           <div class="panel panel-default">
              <div class="panel-heading">
                <h3 class="panel-title">
-                 <a href="output-problem" class="application-download">
+                 <a href="zahlenmauer" class="application-download">
                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                    Problemstellung
                 </a>
               </h3>
             </div>
            <div class="panel-body">
-              <div id="output-problem" class="application-output"></div>
+              <div id="zahlenmauer" class="application-output"></div>
             </div>
           </div>
         </div>
@@ -91,14 +91,14 @@
           <div class="panel panel-default">
             <div class="panel-heading">
               <h3 class="panel-title">
-                <a href="output-solution" class="application-download">
+                <a href="zahlenmauer-lsg" class="application-download">
                   <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
                   Musterlösung
                </a>
              </h3>
            </div>
            <div class="panel-body">
-             <div id="output-solution" class="application-output"></div>
+             <div id="zahlenmauer-lsg" class="application-output"></div>
            </div>
          </div>
         </div>
@@ -125,6 +125,7 @@
 
     <!-- The SVG Generator application -->
     <script src="libs/FileSaver.min.js"></script>
+    <script src="libs/sha1.min.js"></script>
     <script src="application.js"></script>
     <script src="raphael-min.js"></script>
     <!-- The specific code for this particular generator -->

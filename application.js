@@ -42,7 +42,8 @@ var application = {
 application.startDownload = function (container) {
     var payload = application.outputs[container].innerHTML
     var blob = new Blob([payload], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "image.svg");
+    var filename = container + ".svg";
+    saveAs(blob, filename);
 };
 
 /* Transform all the download links */
@@ -51,7 +52,11 @@ for (var i = 0; i < downloads.length; i++) {
     var urlStructure = downloads[i].href.split("/");
     var oldlink = urlStructure[urlStructure.length -1];
     downloads[i].href = "#"; // TODO: This behavior is not expected. Only the download should start.
-    downloads[i].onclick = function () {return application.startDownload(oldlink)};
+    downloads[i].onclick = downloadStarter(oldlink);
+}
+function downloadStarter(oldlink) {
+    // This trivial extra function is necessary, because of the way closures work in javascript.
+    return function () {return application.startDownload(oldlink)};
 }
 
 application.inputRefresh = function () {
