@@ -3,11 +3,6 @@
 outputProblem = Raphael("zahlenmauer", 300, 300);
 outputSolution = Raphael("zahlenmauer-lsg", 300, 300);
 
-application.parseInput = function (inputs) {
-    var input = inputs.sourcecode;
-    return application.parse.sourcecode(input);
-}
-
 application.parse.sourcecode = function (input) {
     var result = [];
     var lines = input.split("\n");
@@ -34,10 +29,6 @@ application.parse.sourcecode = function (input) {
         rows: result.length,
         data: result.reduce(function (prev, x) {return prev.concat(x);}, [])
     };
-}
-
-application.consolidateInput = function (inputs) {
-    return inputs.sourcecode;
 }
 
 application.processData = function (input) {

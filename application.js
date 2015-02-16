@@ -28,6 +28,14 @@ function indexById (array) {
     return result;
 }
 
+function keys (dict) {
+    result = [];
+    for (i in dict) {
+        result.push(i);
+    }
+    return result;
+}
+
 var application = {
     inputs : indexById(document.getElementsByClassName("application-input")),
     outputs : indexById(document.getElementsByClassName("application-output")),
@@ -66,97 +74,103 @@ function downloadStarter(oldlink) {
     return function () {return application.startDownload(oldlink)};
 }
 
-application.inputRefresh = function () {
+application.refreshEverything = function () {
     // this.id refers to the caller by name
     application.msg.wipe();
 
-    application.refreshInput(this.id);
+    var parsedData = E.map(application.refreshInputs(this.id),
+                           application.consolidateInput);
 
-    var success = application.inputRefresh2();
-    if (!success) {
-        application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
-    }
+    var processedData = E.bind(parsedData, application.refreshProcessing);
+    E.map(processedData, application.refreshOutputs);
+
+    E.handleError(processedData, application.msg.errorFromMonad);
+
+    var serializedData = E.bind(parsedData, function (parsedData) {
+        var serializedData = application.refreshSerialization(parsedData);
+        E.map(serializedData, application.refreshLink);
+        E.handleError(serializedData, application.msg.errorFromMonad);
+        return serializedData;
+    })
 
     application.displayErrors();
-}
-
-application.refreshInput = function (source) {
-    if (typeof(source) == "undefined") {
-        // refresh all available inputs
-        var result = true; // are there errors?
-        for (i in application.inputs) {
-            result = (result && application.refreshInput(i));
-        }
-        return result;
-    }
-    if (!(source in application.inputs)) {
-        application.msg.error("Interner Fehler:",
-                              "Ein nicht als Quelle geführtes Objekt hat eine Quellenaktuallisierung angefordert.");
-        return false;
-    }
-    var rawData = application.inputs[source].value;
-
-    var parsedData = application.parse[source](rawData);
-
-    application.cache.parsedData[source] = parsedData;
-    return true;
-}
-
-application.inputRefresh2 = function () {
-//    var rawInputData = {};
-//    for (i in application.inputs) {
-//        rawInputData[i] = application.inputs[i].value;
+//    if (!success) {
+//        application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
 //    }
 
-//    var inputData = application.parseInput(rawInputData);
-    var inputData = application.consolidateInput(application.cache.parsedData);
+}
 
-    if (typeof(inputData) == "undefined") {
-        application.msg.error("Achtung!", "Die Eingabe wird vom Programm nicht verstanden.");
-        return false;
+// source is an optional parameter. If it is undefined, all inputs will be refreshed.
+application.refreshInputs = function (source) {
+    var newData;
+    if (typeof(source) == "undefined") {
+        // refresh all available inputs
+        newData = E.sequence( // makes sure to collect only one error
+            keys(application.inputs).map(application.refreshInput)
+        );
+    } else {
+        newData = E.sequence([application.refreshInput(source)]);
     }
 
-    if (application.cache.setParsed(inputData)) {
-        // There is nothing todo, as the input data did not actually change
-        return false;
+    return E.bind(newData, function (newData) {
+        for (var i = 0; i < newData.length; i++) {
+            application.cache.parsedData[newData[i].id] = newData[i].data;
+        }
+        return E.pure(application.cache.parsedData);
+    });
+}
+
+// application.refreshInput :: id -> E data
+application.refreshInput = function (source) {
+   if (!(source in application.inputs)) {
+        return E.error("Interner Fehler:",
+                       "Ein nicht als Quelle geführtes Objekt hat eine Quellenaktuallisierung angefordert.");
     }
 
-    // Input data has changed and we need to update the resulting data accordingly.
+    var parsedData = application.parse[source](
+        application.inputs[source].value
+    );
 
-    var processedData = application.processData(inputData);
+    if (typeof(parsedData) === "undefined") {
+        return E.error("Achtung!",
+                       "Die Eingabe im Feld '%s' wird vom Programm nicht verstanden.".replace("%s", source));
+    }
+
+    return E.pure({id: source, data: parsedData});
+}
+
+application.refreshProcessing = function (parsedData) {
+    var processedData = application.processData(
+        parsedData);
 
     if (typeof(processedData) == "undefined") {
-        application.msg.error("Fehler!", "Die eingegebenen Daten werden zwar eingelesen, sind aber nicht ausreichend oder fehlerhaft.");
-        return false;
+        return E.error("Fehler!", "Die eingegebenen Daten werden zwar eingelesen, sind aber nicht ausreichend oder fehlerhaft.");
+    } else {
+        return E.pure(processedData);
     }
+}
 
-    if (application.cache.setProcessed(inputData)) {
-        // Rendering doesn't need to be repeated,
-        // as the real data did not actually change.
-        return false;
-    }
-
-    // The processed data has changed and we need to update the outputs.
-
+application.refreshOutputs = function (processedData) {
     for (o in application.outputs) {
         application.renderOutput[o](processedData);
     }
+}
 
-    // If no errors occurred, serialize the input data into a link.
-
+application.refreshSerialization = function (inputData) {
     var serializedData = application.serialize(inputData);
-    var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
 
-    if (typeof(serializedInputLink) == "undefined") {
-        application.msg.error("Fehler!", "Der Link kann nicht aktuallisert werden");
-        return true;
+    if (typeof(serializedData) === "undefined") {
+        return E.error("Fehler!", "Das Erstellen eines Links ist fehlgeschlagen.");
     }
+
+    return E.pure(serializedData);
+}
+
+application.refreshLink = function (serializedData) {
+    var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
 
     application.staticLink.value = serializedInputLink;
     document.location.hash = "#"+serializedData;
-
-    // Done.
-    return true;
 }
 
 application.init = function () {
@@ -167,15 +181,13 @@ application.init = function () {
             application.inputs[i].value = recreatedInput[i];
         }
     }
-    application.inputRefresh();
+    application.refreshEverything();
 }
 
 /* Hook up all input elements */
 for (i in application.inputs) {
-    application.inputs[i].onkeyup = application.inputRefresh;
+    application.inputs[i].onkeyup = application.refreshEverything;
 }
-
-
 
 
 // The new warning and error module
@@ -192,6 +204,11 @@ application.msg.error = function (caption, text) {
         cssClass : "alert alert-danger"
     })
 };
+
+application.msg.errorFromMonad = function (mError) {
+    application.msg.error(mError.caption, mError.text);
+    return E.pure(undefined); // All errors have been catched.
+}
 
 application.msg.warn = function (caption, text) {
     application.msg.warnings.push({
@@ -244,3 +261,24 @@ function removeAllChildren (node) {
 // Some default parsers and processors
 application.parseInput = function (x) {return x;};
 application.processData = function (x) {return x;};
+
+
+/* Default implementation of application.consolidateInput.
+ * It will create a single object which has all the properties
+ * of the small objects together.
+ */
+application.consolidateInput = function (inputs) {
+    var result = {};
+    for (i in inputs) {
+        for (key in inputs[i]) {
+            if (key in result) {
+                application.msg.error("Interner Fehler:",
+                                      "Die verschiedenen Lesefunktionen geben wiedersprüchliche Werte zurück.");
+            } else {
+                result[key] = inputs[i][key];
+            }
+        }
+    }
+    return result;
+}
+
