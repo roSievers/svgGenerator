@@ -57,7 +57,8 @@ var application = {
 application.startDownload = function (container) {
     var payload = application.outputs[container].innerHTML
     var blob = new Blob([payload], {type: "text/plain;charset=utf-8"});
-    var filename = container + ".svg";
+    var pseudorandomSuffix = Sha1.hash(""+application.cache.serializedData).slice(-3);
+    var filename = container + "-" +pseudorandomSuffix+ ".svg";
     saveAs(blob, filename);
 };
 
@@ -92,6 +93,7 @@ application.refreshEverything = function () {
         E.handleError(serializedData, application.msg.errorFromMonad);
         return serializedData;
     })
+    E.bind(serializedData, function (serializedData) {application.cache.serializedData = serializedData});
 
     application.displayErrors();
 //    if (!success) {
