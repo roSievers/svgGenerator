@@ -33,7 +33,14 @@ var application = {
     outputs : indexById(document.getElementsByClassName("application-output")),
     staticLink : document.getElementById("application-static-link"),
     stderr : document.getElementById("stderr"),
-    renderOutput : {}
+    renderOutput : {},
+    parse : {}, // keeps all the parsers around.
+    cache : {
+        parsedData : {},
+        serializedData : undefined,
+        setParsed : function (x) {return false;},
+        setProcessed : function (x) {return false;}
+    }
 };
 
 
@@ -60,7 +67,11 @@ function downloadStarter(oldlink) {
 }
 
 application.inputRefresh = function () {
+    // this.id refers to the caller by name
     application.msg.wipe();
+
+    application.refreshInput(this.id);
+
     var success = application.inputRefresh2();
     if (!success) {
         application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
@@ -69,13 +80,36 @@ application.inputRefresh = function () {
     application.displayErrors();
 }
 
-application.inputRefresh2 = function () {
-    var rawInputData = {};
-    for (i in application.inputs) {
-        rawInputData[i] = application.inputs[i].value;
+application.refreshInput = function (source) {
+    if (typeof(source) == "undefined") {
+        // refresh all available inputs
+        var result = true; // are there errors?
+        for (i in application.inputs) {
+            result = (result && application.refreshInput(i));
+        }
+        return result;
     }
+    if (!(source in application.inputs)) {
+        application.msg.error("Interner Fehler:",
+                              "Ein nicht als Quelle geführtes Objekt hat eine Quellenaktuallisierung angefordert.");
+        return false;
+    }
+    var rawData = application.inputs[source].value;
 
-    var inputData = application.parseInput(rawInputData);
+    var parsedData = application.parse[source](rawData);
+
+    application.cache.parsedData[source] = parsedData;
+    return true;
+}
+
+application.inputRefresh2 = function () {
+//    var rawInputData = {};
+//    for (i in application.inputs) {
+//        rawInputData[i] = application.inputs[i].value;
+//    }
+
+//    var inputData = application.parseInput(rawInputData);
+    var inputData = application.consolidateInput(application.cache.parsedData);
 
     if (typeof(inputData) == "undefined") {
         application.msg.error("Achtung!", "Die Eingabe wird vom Programm nicht verstanden.");
@@ -142,11 +176,6 @@ for (i in application.inputs) {
 }
 
 
-// Caching stubs.
-application.cache = {
-    setParsed : function (x) {return false;},
-    setProcessed : function (x) {return false;}
-}
 
 
 // The new warning and error module
