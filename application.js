@@ -67,7 +67,7 @@ var downloads = document.getElementsByClassName("application-download");
 for (var i = 0; i < downloads.length; i++) {
     var urlStructure = downloads[i].href.split("/");
     var oldlink = urlStructure[urlStructure.length -1];
-    downloads[i].href = "#"; // TODO: This behavior is not expected. Only the download should start.
+    downloads[i].removeAttribute("href");
     downloads[i].onclick = downloadStarter(oldlink);
 }
 function downloadStarter(oldlink) {
