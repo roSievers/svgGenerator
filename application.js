@@ -95,11 +95,12 @@ application.refreshEverything = function () {
     })
     E.bind(serializedData, function (serializedData) {application.cache.serializedData = serializedData});
 
-    application.displayErrors();
-//    if (!success) {
-//        application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
-//    }
+    if (E.hasError(processedData)) {
+        // The application did fail before producing new output.
+        application.msg.warn("Hinweis:", "Aufgrund der aufgetretenen Fehler ist die Ausgabe eventuell veraltet.");
+    }
 
+    application.displayErrors();
 }
 
 // source is an optional parameter. If it is undefined, all inputs will be refreshed.
