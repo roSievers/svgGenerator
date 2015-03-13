@@ -19,16 +19,22 @@ application.parse.sourcecode = function (input) {
 
         // Now check, if the received data is sane.
     for (var row = 0; row < result.length; row++) {
-        if (result[row].length != row + 1) { return undefined; }
+        if (result[row].length != row + 1) {
+            return E.error("Eingabefehler:", "Die Eingabe ist nicht in Dreiecksform.");
+        }
         for (var col = 0; col <= row; col++) {
-            if (result[row][col] == NaN) { return undefined; }
+            if (result[row][col] !== result[row][col]) {
+                // Yes, checking x !== x looks stupid, but in javascript this holds true for Nan.
+                return E.error("Eingabefehler:", "Die %1te Zahl in der %2ten Zeile wird vom Programm nicht verstanden.".replace("%1", col+1).replace("%2", row+1));
+            }
         }
     }
 
-    return {
+    return E.pure({
         rows: result.length,
+        // Place all of the input data in a single long array
         data: result.reduce(function (prev, x) {return prev.concat(x);}, [])
-    };
+    });
 }
 
 application.processData = function (input) {
@@ -54,7 +60,7 @@ application.processData = function (input) {
             {info:newInformation, color:"gray"} ]);
     }
 
-    return result;
+    return E.pure(result);
 }
 
 application.renderOutput["zahlenmauer"] = function (data) {
@@ -68,12 +74,12 @@ application.renderOutput["zahlenmauer-lsg"] = function (data) {
 }
 
 application.serialize = function (inputData) {
-    return inputData.data.map(function (x) {
+    return E.pure(inputData.data.map(function (x) {
         if (typeof(x) == undefined) {
             return "";
         }
         return x
-    }).join();
+    }).join());
 }
 
 application.deserialize = function (serialized) {

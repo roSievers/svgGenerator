@@ -82,13 +82,13 @@ application.refreshEverything = function () {
     var parsedData = E.map(application.refreshInputs(this.id),
                            application.consolidateInput);
 
-    var processedData = E.bind(parsedData, application.refreshProcessing);
+    var processedData = E.bind(parsedData, application.processData);
     E.map(processedData, application.refreshOutputs);
 
     E.handleError(processedData, application.msg.errorFromMonad);
 
     var serializedData = E.bind(parsedData, function (parsedData) {
-        var serializedData = application.refreshSerialization(parsedData);
+        var serializedData = application.serialize(parsedData);
         E.map(serializedData, application.refreshLink);
         E.handleError(serializedData, application.msg.errorFromMonad);
         return serializedData;
@@ -133,24 +133,7 @@ application.refreshInput = function (source) {
     var parsedData = application.parse[source](
         application.inputs[source].value
     );
-
-    if (typeof(parsedData) === "undefined") {
-        return E.error("Achtung!",
-                       "Die Eingabe im Feld '%s' wird vom Programm nicht verstanden.".replace("%s", source));
-    }
-
-    return E.pure({id: source, data: parsedData});
-}
-
-application.refreshProcessing = function (parsedData) {
-    var processedData = application.processData(
-        parsedData);
-
-    if (typeof(processedData) == "undefined") {
-        return E.error("Fehler!", "Die eingegebenen Daten werden zwar eingelesen, sind aber nicht ausreichend oder fehlerhaft.");
-    } else {
-        return E.pure(processedData);
-    }
+    return E.map(parsedData, function (x) {return {id:source, data:x}});
 }
 
 application.refreshOutputs = function (processedData) {
