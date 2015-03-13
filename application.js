@@ -142,16 +142,6 @@ application.refreshOutputs = function (processedData) {
     }
 }
 
-application.refreshSerialization = function (inputData) {
-    var serializedData = application.serialize(inputData);
-
-    if (typeof(serializedData) === "undefined") {
-        return E.error("Fehler!", "Das Erstellen eines Links ist fehlgeschlagen.");
-    }
-
-    return E.pure(serializedData);
-}
-
 application.refreshLink = function (serializedData) {
     var serializedInputLink = document.location.href.split("#")[0] + "#" + serializedData;
 
